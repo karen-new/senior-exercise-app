@@ -1,10 +1,9 @@
 const { DynamoDBClient,  QueryCommand, ScanCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2-article";
+const TableName = "senior-exercise-app-article-table";
 
 exports.handler = async (event, context) => {
-  //レスポンスの雛形
   const response = {
     statusCode: 200,
     headers: {
@@ -13,6 +12,7 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ message: "" }),
   };
   
+  //ログインしていない場合の処理
   if (event.headers.authorization !== "mtiToken") {
     response.statusCode = 401;
     response.body = JSON.stringify({
@@ -35,7 +35,7 @@ exports.handler = async (event, context) => {
   
   //ユーザーIDが有効な場合
   else{
-    const { userId, start, end, category } = event.queryStringParameters;
+    const { userId, start, end } = event.queryStringParameters;
     
     param = {
       TableName,
@@ -54,12 +54,6 @@ exports.handler = async (event, context) => {
       KeyConditionExpression: '#u = :userId and #t BETWEEN :start AND :end',
     };
     
-    //カテゴリ指定がある場合
-    if (category) {
-      param.ExpressionAttributeValues[":category"] = category;
-      param.FilterExpression = "category = :category";
-    }
-    
     param.ExpressionAttributeValues = marshall(param.ExpressionAttributeValues)
   }
 
@@ -70,7 +64,6 @@ exports.handler = async (event, context) => {
   const queryCommand = new QueryCommand(param);
 
   try {
-    //client.send()の実行でDBからデータを取得
     //ユーザーIDがなく無効なパラメータの場合は全件取得
       const article = flag 
       ? (await client.send(scanCommand)).Items

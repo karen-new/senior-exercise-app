@@ -1,7 +1,7 @@
 const { DynamoDBClient, PutItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2-article";
+const TableName = "senior-exercise-app-article-table";
  
 exports.handler = async (event, context) => {
   const response = {
@@ -12,6 +12,7 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ message: "" }),
   };
   
+  //ログインしていない場合の処理
   if (event.headers.authorization !== "mtiToken") {
     response.statusCode = 401;
     response.body = JSON.stringify({
@@ -22,10 +23,9 @@ exports.handler = async (event, context) => {
   }
 
  
-  // TODO: リクエストボディの中身をJavaScriptオブジェクトに変換し、1つ、あるいは複数の変数に代入する
   const body = event.body ? JSON.parse(event.body) : null;
   
-  
+  //リクエストボディに必要な情報が渡っていない場合の処理
   if (!body || !body.userId || !body.text){
     response.statusCode = 400;
     response.body = JSON.stringify({
@@ -34,7 +34,7 @@ exports.handler = async (event, context) => {
     return response;
   }
  
-  
+  //DBに登録するデータを設定
   const { userId, text } = body;
   const timestamp = Date.now();
   const param = {
@@ -50,9 +50,7 @@ exports.handler = async (event, context) => {
   const command = new PutItemCommand(param);
  
   try {
-    // client.send()でDBにデータを登録するコマンドを実行
     await client.send(command);
-    // TODO: 登録に成功した場合の処理を記載する。(status codeの設定と、response bodyの設定)
     response.statusCode = 200;
     response.body = JSON.stringify({userId,text,timestamp});
   } catch (e) {

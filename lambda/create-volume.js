@@ -1,7 +1,7 @@
 const { DynamoDBClient, PutItemCommand, UpdateItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2_user";
+const TableName = "senior-exercise-app-article-table";
 
 
 exports.handler = async (event, context) => {
@@ -13,6 +13,7 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ message: "" }),
   };
 
+  //リクエストボディに必要な情報が渡っていない場合の処理
   const body = event.body ? JSON.parse(event.body) : null;
   if (!body ||!body.userId || !body.volume) {
     response.statusCode = 400;
@@ -24,9 +25,9 @@ exports.handler = async (event, context) => {
     return response;
   }
 
+  //DBに登録するvolumeのデータを設定
   const { userId, volume } = body;
   const param = {
-    // ↓プロパティ名と変数名が同一の場合は、値の指定を省略できる。
     TableName, 
     Key: marshall({
       userId,
@@ -41,6 +42,7 @@ exports.handler = async (event, context) => {
 
   };
   
+  // DBにデータを登録するコマンドを用意
   param.ExpressionAttributeValues = marshall(param.ExpressionAttributeValues)
   
   const command = new UpdateItemCommand(param);

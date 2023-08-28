@@ -1,7 +1,7 @@
 const { DynamoDBClient, QueryCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2-user";
+const TableName = "senior-exercise-app-user-table";
 
 exports.handler = async (event, context) => {
   const response = {
@@ -25,11 +25,8 @@ exports.handler = async (event, context) => {
 
   const param = {
     TableName,
-    //キー、インデックスによる検索の定義
     KeyConditionExpression: "userId = :uid",
-    //プライマリーキー以外の属性でのフィルタ
     FilterExpression: "password = :pkey",
-    //検索値のプレースホルダの定義
     ExpressionAttributeValues: marshall({
       ":uid": body.userId,
       ":pkey": body.password,

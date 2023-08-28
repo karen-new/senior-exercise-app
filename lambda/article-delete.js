@@ -1,10 +1,7 @@
-const {
-  DynamoDBClient,
-  DeleteItemCommand,
-} = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, DeleteItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2-article";
+const TableName = "senior-exercise-app-article-table";
 
 exports.handler = async (event, context) => {
   const response = {
@@ -14,10 +11,20 @@ exports.handler = async (event, context) => {
     },
     body: JSON.stringify({ message: "" }),
   };
+  
+  //ログインしていない場合の処理
+  if (event.headers.authorization !== "mtiToken") {
+    response.statusCode = 401;
+    response.body = JSON.stringify({
+      message: "認証されていません。HeaderにTokenを指定してください",
+    });
 
+    return response;
+  }
+
+  //DBから削除するデータを設定
   const userId = event.queryStringParameters?.userId;
   const timestamp = Number(event.queryStringParameters?.timestamp);
-  // TODO: 削除対象のテーブル名と削除したいデータのkeyをparamに設定
   const param = {
     TableName,
     "Key":marshall({
@@ -30,9 +37,7 @@ exports.handler = async (event, context) => {
   const command = new DeleteItemCommand(param);
 
   try {
-    // client.send()を用いてデータを削除するコマンドを実行
     await client.send(command);
-    // TODO: 成功後の処理を記載(status codeを指定する。)
     response.statusCode=204;
     response.body=JSON.stringify({message:""})
   } catch (e) {

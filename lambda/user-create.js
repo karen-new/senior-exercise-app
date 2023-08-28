@@ -1,7 +1,7 @@
 const { DynamoDBClient, PutItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2_user";
+const TableName = "senior-exercise-app-user-table";
 
 
 exports.handler = async (event, context) => {
@@ -14,6 +14,8 @@ exports.handler = async (event, context) => {
   };
 
   const body = event.body ? JSON.parse(event.body) : null;
+  
+  //リクエストボディに必要な情報が渡っていない場合の処理
   if (!body || !body.userId || !body.age || !body.password) {
     console.log(body);
     response.statusCode = 400;
@@ -25,6 +27,7 @@ exports.handler = async (event, context) => {
     return response;
   }
   
+  //DBに登録するデータを設定
   const { userId, age, password } = body;
   const param = {
     TableName,
@@ -37,6 +40,7 @@ exports.handler = async (event, context) => {
     }),
   };
 
+  // DBにデータを登録するコマンドを用意
   const command = new PutItemCommand(param);
 
   try {

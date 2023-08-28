@@ -1,9 +1,8 @@
 const { DynamoDBClient, UpdateItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2_user";
+const TableName = "senior-exercise-app-user-table";
 
-/*** 通常版の解答例(発展課題を含む最終版は下にあります。) ***/
 exports.handler = async (event, context) => {
   const response = {
     statusCode: 200,
@@ -13,9 +12,7 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ message: "" }),
   };
   
-  
-  // 今回は簡易的な実装だが、一般的にはAuthorizationHeaderの値は、Authorization: <type> <credentials>のような形式になります。
-  // https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Authorization#%E6%A7%8B%E6%96%87
+  //ログインしていない場合の処理
   if (event.headers.authorization !== "mtiToken") {
     response.statusCode = 401;
     response.body = JSON.stringify({
@@ -25,6 +22,7 @@ exports.handler = async (event, context) => {
     return response;
   }
 
+  //リクエストボディに必要な情報が渡っていない場合の処理
   const body = event.body ? JSON.parse(event.body) : null;
   if (!body || !body.userId || !body.exp) {
     response.statusCode = 400;
@@ -36,10 +34,10 @@ exports.handler = async (event, context) => {
     return response;
   }
 
+  //DBの更新する経験値を設定
   const { userId,exp } = JSON.parse(event.body);
  
   const param = {
-    // ↓プロパティ名と変数名が同一の場合は、値の指定を省略できる。
     TableName, 
     Key: marshall({
       userId,
@@ -56,7 +54,9 @@ exports.handler = async (event, context) => {
   
   param.ExpressionAttributeValues = marshall(param.ExpressionAttributeValues)
   
+  // DBのデータを更新するコマンドを用意
   const command = new UpdateItemCommand(param);
+  
   try{
     await client.send(command);
     response.body = JSON.stringify({userId, exp});

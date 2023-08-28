@@ -1,10 +1,9 @@
 const { DynamoDBClient, GetItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "team2-exercise";
+const TableName = "senior-exercise-app-exercise-table";
 
 exports.handler = async (event, context) => {
-  //レスポンスの雛形
   const response = {
     statusCode: 200,
     headers: {
@@ -13,30 +12,28 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ message: "" }),
   };
 
-  // 今回は簡易的な実装だが、一般的にはAuthorizationHeaderの値は、Authorization: <type> <credentials>のような形式になります。
-  // https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Authorization#%E6%A7%8B%E6%96%87
-  // if (event.headers.authorization !== "mtiToken") {
-  //   response.statusCode = 401;
-  //   response.body = JSON.stringify({
-  //     message: "認証されていません。HeaderにTokenを指定してください",
-  //   });
+  //ログインしていない場合の処理
+  if (event.headers.authorization !== "mtiToken") {
+    response.statusCode = 401;
+    response.body = JSON.stringify({
+      message: "認証されていません。HeaderにTokenを指定してください",
+    });
 
-  //   return response;
-  // }
+    return response;
+  }
 
-  // ?.でアクセスすることをオプショナルチェーンと呼び、nullかundefinedの時は、Errorが起きる代わりにundefinedを返す。
-  // プロパティの事前チェックが不要になる。(https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Operators/Optional_chaining)
-  //const exerciseId = event.queryStringParameters?.exerciseId; //見たいユーザのuserId
+  const exerciseId = event.queryStringParameters?.exerciseId;
   
-  // if (!exerciseId) {
-  //   response.statusCode = 400;
-  //   response.body = JSON.stringify({
-  //     message:
-  //       "無効なリクエストです。クエリストリングに必須パラメータがセットされていません。",
-  //   });
+  //リクエストボディに必要な情報が渡っていない場合の処理
+  if (!exerciseId) {
+    response.statusCode = 400;
+    response.body = JSON.stringify({
+      message:
+        "無効なリクエストです。クエリストリングに必須パラメータがセットされていません。",
+    });
 
-  //   return response;
-  // }
+    return response;
+  }
   
   const body = JSON.parse(event.body);
   const exerciseId = body.exerciseId;
