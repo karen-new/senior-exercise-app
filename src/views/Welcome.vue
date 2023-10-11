@@ -73,6 +73,7 @@
 </template>
 <script>
   import { baseUrl } from '@/assets/config.js';
+  const headers = { "Access-Control-Allow-Origin": "*" };
 
   export default {
     name: 'Welcome',

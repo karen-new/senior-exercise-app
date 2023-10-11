@@ -59,6 +59,8 @@
   // @は/srcの同じ意味です
   // import something from '@/components/something.vue';
   import { baseUrl } from '@/assets/config.js';
+  
+  const headers = { "Access-Control-Allow-Origin": "*" };
 
   export default {
     name: 'Login',
@@ -130,7 +132,8 @@
           /* global fetch */
           const res = await fetch(baseUrl + path, {
             method: 'POST',
-            body: JSON.stringify(reqBody)
+            body: JSON.stringify(reqBody),
+            headers
           });
 
           const text = await res.text();

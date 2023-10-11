@@ -1,7 +1,7 @@
-const { DynamoDBClient, PutItemCommand, UpdateItemCommand } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBClient, UpdateItemCommand } = require("@aws-sdk/client-dynamodb");
 const { marshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
-const TableName = "senior-exercise-app-article-table";
+const TableName = "senior-exercise-app-user-table";
 
 
 exports.handler = async (event, context) => {
