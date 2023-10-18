@@ -28,8 +28,8 @@
             <!-- for="article-category"をtimeに -->
             <h1>運動タスク</h1>
             <ul>
-              <li>散歩をしましょう！</li>
-              <li>30分を目安に運動をしましょう！</li>
+              <li>{{ exercise }}をしましょう！</li>
+              <li>{{ time }}分を目安に運動をしましょう！</li>
               <li>心拍数は{{goal}}を目指しましょう！</li>
             </ul>
             <hr>
@@ -39,7 +39,7 @@
               type="number"
             />
             <p>
-              {{result}}
+              {{ result }}
             </p>
           </div>
           <div class="right-align">
@@ -94,9 +94,6 @@
 </template>
 
 <script>
-// 必要なものはここでインポートする
-// @は/srcと同じ意味です
-// import something from '@/components/something.vue';
 import { baseUrl } from "@/assets/config.js";
 
 const headers = { Authorization: "mtiToken", "Access-Control-Allow-Origin": "*" };
@@ -104,12 +101,7 @@ const headers = { Authorization: "mtiToken", "Access-Control-Allow-Origin": "*" 
 export default {
   name: "Home",
 
-  components: {
-    // 読み込んだコンポーネント名をここに記述する
-  },
-
   data() {
-    // Vue.jsで使う変数はここに記述する
     return {
       post: {
         age: null,
@@ -122,7 +114,6 @@ export default {
         start: null,
         end: null,
       },
-      
       articles: [],
       iam: null,
       userId: null,
@@ -133,21 +124,20 @@ export default {
       successMsg: "",
       errorMsg: "",
       isCallingApi: false,
-      
       user:{
-        userId:"isogami",
-        age:20,
+        userId:"",
+        age:80,
       },
       team2_users:[],
       team2_goals:[],
       result:"",
       goal:"",
-        
+      exercise:"",
+      time:20,
     };
   },
 
   computed: {
-    // 計算した結果を変数として利用したいときはここに記述する
     isPostButtonDisabled() {
       return !this.post.text;
     },
@@ -155,11 +145,9 @@ export default {
     isSearchButtonDisabled() {
       return !this.search.userId;
     },
-    
   },
 
   created: async function () {
-    // Vue.jsの読み込みが完了したときに実行する処理はここに記述する
     // apiからarticleを取得する
     if (
       window.localStorage.getItem("token")
@@ -171,13 +159,13 @@ export default {
     }
     await this.getUser();
     await this.getVital();
+    const exercise = await this.getExercise();
+    await this.exerciseExplanation(exercise);
   },
 
   methods: {
-    // Vue.jsで使う関数はここで記述する
-    //入力された心拍数を基準値と比べ、完了の可否を決定
     async checkResult() {
-      
+    //入力された心拍数を基準値と比べ、完了の可否を決定
       let weight;
       if(this.volume==="matu"){
         weight=0.7;
@@ -189,14 +177,15 @@ export default {
       
       if((220-this.team2_users[0].age)*weight <= this.vital && this.vital<= (220-this.team2_users[0].age)*(weight+0.1)){
           this.team2_users[0].exp+=100;
-          this.result = "合格です！経験値を100獲得しました！";
+          this.result = "運動目標達成です！経験値を100獲得しました！";
       }else{
-          this.result = "残念！不合格です。つぎはがんばりましょう! ";
+          this.result = "あとひといきです！次はがんばりましょう! ";
       }
       await this.changeExp(this.user.userId,this.team2_users[0].exp);
     },
     
     async getUser(){
+      //ユーザーの取得
       try {
         this.user.userId=window.localStorage.getItem("userId");
         /* global fetch */
@@ -227,57 +216,85 @@ export default {
         this.isCallingApi = false;
       }
     },
-    //目標心拍数を求める
+    
     async getVital(){
-      try{
-        console.log(this.user.age);
-      
-        let weight;
-        if(this.volume==="matu"){
-          weight=0.7;
-        }else if(this.volume==="take"){
-          weight=0.6;
-        }else{
-          weight=0.5;
-        }
-        this.goal=(220-this.user.age)*weight;
-
-      } catch (e) {
-        console.error(e);
-        this.errorMsg = e;
-      } finally {
+    //目標心拍数を求める
+      let weight=0.0;
+      if(this.volume==="matu"){
+        weight=0.7;
+      }else if(this.volume==="take"){
+        weight=0.6;
+      }else{
+        weight=0.5;
       }
+      this.goal=(220-this.user.age)*weight;
     },
     
-    //運動の種類をランダムに表示
     async getExercise(){
+    //運動の種類をvolumeごとにランダムに表示
       try {
-        this.user.userId=window.localStorage.getItem("userId");
         /* global fetch */
         const res = await fetch(
           //baseUrl + "/user?userId=isogami",
-          `${baseUrl}/user?userId=${this.user.userId}`,
+          `${baseUrl}/home/getExercise`,
           {
             method: "GET",
             headers,
           }
         );
         
-        const user = await res.json();
-        console.log(user);
-        this.team2_users=[user];
-
+        const text = await res.json();
+        const jsonData = text || {};
+        
         // fetchではネットワークエラー以外のエラーはthrowされないため、明示的にthrowする
         if (!res.ok) {
           const errorMessage =
             jsonData.message ?? "エラーメッセージがありません";
           throw new Error(errorMessage);
         }
+        else {
+        const exercises = jsonData.exercises ?? [];
+        //ログインユーザーのvolumeに合わせた運動をピックアップ
+        const filteredExercises = exercises.filter(exercise => exercise.volume === this.user.volume);
+        console.log(filteredExercises);
+        //ピックアップした運動からランダムに表示
+        if (filteredExercises.length > 0) {
+          const randomIndex = Math.floor(Math.random() * filteredExercises.length);
+          return filteredExercises[randomIndex];
+        } else {
+          const errorMessage = "exerciseがありません";
+          throw new Error(errorMessage);
+        }
+        }
       } catch (e) {
         console.error(e);
         this.errorMsg = e;
       } finally {
         this.isCallingApi = false;
+      }
+    },
+    
+    exerciseExplanation(exercise) {
+      console.log(exercise)
+      //ストレッチ系の場合は心拍数を低下に設定、他の場合はgetvitalの通り
+      //todo:無酸素運動と有酸素運動でも分ける
+      if (exercise.type == "stretch"){
+        this.goal = "低下すること";
+      }
+      if (exercise.exerciseId == "walking"){
+        this.exercise = "ウォーキング";
+        this.time = 20;
+      }
+      else if (exercise.exerciseId == "stretch"){
+        this.exercise = "ストレッチ";
+        this.time = 20;
+      }
+      else if (exercise.exerciseId == "walking2"){
+        this.exercise = "ウォーキング";
+        this.time = 30;
+      }
+      else{
+        console.error("無効な運動です");
       }
     },
     
