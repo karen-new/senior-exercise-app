@@ -14,9 +14,9 @@
         <div class="ui divider"></div>
         <select v-model="selectedVolume" id="select" class="ui fluid dropdown huge  large">
           <option disabled value="null">選択してください</option> <!-- 追加 -->
-          <option value="松">松(初級)：睡眠の質や気分の改善・リラックス効果など</option>
-          <option value="竹">竹(中級)：心肺機能、基礎代謝、認知機能の向上など</option>
-          <option value="梅">梅(上級)：筋力、骨密度の向上・心臓の健康など</option>
+          <option value="matsu">松(初級)：睡眠の質や気分の改善・リラックス効果など</option>
+          <option value="take">竹(中級)：心肺機能、基礎代謝、認知機能の向上など</option>
+          <option value="ume">梅(上級)：筋力、骨密度の向上・心臓の健康など</option>
         </select>
         <button @click="registerVolumeToDB" class="ui button  huge fluid large blue">登録</button>
         <div class="ui divider"></div>

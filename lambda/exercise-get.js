@@ -1,5 +1,5 @@
-const { DynamoDBClient, GetItemCommand } = require("@aws-sdk/client-dynamodb");
-const { marshall, unmarshall } = require("@aws-sdk/util-dynamodb");
+const { DynamoDBClient, ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { unmarshall } = require("@aws-sdk/util-dynamodb");
 const client = new DynamoDBClient({ region: "ap-northeast-1" });
 const TableName = "senior-exercise-app-exercise-table";
 
@@ -18,44 +18,27 @@ exports.handler = async (event, context) => {
     response.body = JSON.stringify({
       message: "認証されていません。HeaderにTokenを指定してください",
     });
-
-    return response;
-  }
-
-  const exerciseId = event.queryStringParameters?.exerciseId;
-  
-  //リクエストボディに必要な情報が渡っていない場合の処理
-  if (!exerciseId) {
-    response.statusCode = 400;
-    response.body = JSON.stringify({
-      message:
-        "無効なリクエストです。クエリストリングに必須パラメータがセットされていません。",
-    });
-
     return response;
   }
   
-  const body = JSON.parse(event.body);
-  const exerciseId = body.exerciseId;
   const param = {
     TableName,
-    Key: marshall({
-      exerciseId,
-    }),
   };
 
-  const command = new GetItemCommand(param);
+  const command = new ScanCommand(param);
 
-  //GetItemCommandの実行でDBからデータを取得
+  //ScanCommandの実行でDBからデータを取得
   try {
-    const exercise = (await client.send(command)).Item;
-    if (!exercise) {
-      throw new Error("指定されたuserIdを持つuserは見つかりません");
+    const exercises = (await client.send(command)).Items;
+    console.log(exercises);
+    if (exercises?.length === 0) {
+      throw new Error("exerciseがデータベースにありません");
+    } 
+    else{
+      const unmarshalledUsersItems = exercises.map((item) => unmarshall(item));
     }
-
-    response.body = JSON.stringify(unmarshall(exercise));
   } catch (e) {
-    if (e.message == "指定されたuserIdを持つuserは見つかりません") {
+    if (e.message == "exerciseがデータベースにありません") {
       response.statusCode = 404;
       response.body = JSON.stringify({
         message: e.message,
